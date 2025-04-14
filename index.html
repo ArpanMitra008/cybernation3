@@ -100,6 +100,7 @@
 <body>
   <h2>Group Video Call</h2>
 
+  <!-- Username and Room Setup -->
   <div class="controls" id="setup">
     <input type="text" id="username" placeholder="Enter your name" />
     <button class="icon-btn" onclick="init()">➡️</button>
@@ -111,10 +112,12 @@
     <button class="icon-btn" onclick="joinRoom()">🔗</button>
   </div>
 
+  <!-- Video Container -->
   <div id="video-container">
     <video id="my-video" autoplay muted></video>
   </div>
 
+  <!-- Icon Controls for Mute/Unmute and Leave/End Call -->
   <div class="icon-bar" id="icon-bar" style="display:none;">
     <button class="icon-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
     <button class="icon-btn" id="cam-btn" onclick="toggleCamera()">🎥</button>
@@ -136,10 +139,7 @@
       document.getElementById('setup').style.display = 'none';
       document.getElementById('room-setup').style.display = 'flex';
 
-      userStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('my-video').srcObject = userStream;
-
-      // Initialize PeerJS with public PeerJS server
+      // Set up PeerJS connection
       peer = new Peer(undefined, {
         host: 'peerjs.com',
         secure: true,
@@ -147,16 +147,29 @@
         path: '/myapp'
       });
 
-      peer.on('open', id => console.log('Peer ID:', id));
-      peer.on('call', call => {
-        call.answer(userStream);
-        call.on('stream', stream => addVideoStream(call.peer, stream));
+      // When PeerJS successfully connects, it generates an ID
+      peer.on('open', function(id) {
+        console.log('My peer ID is: ' + id);
+        // Optionally display the peer ID on the page
+        document.getElementById('peer-id-display').textContent = `Your Peer ID: ${id}`;
+      });
+
+      // Request user media (audio + video)
+      userStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('my-video').srcObject = userStream;
+
+      // Handle incoming calls
+      peer.on('call', function(call) {
+        call.answer(userStream); // Answer the call with the user's stream
+        call.on('stream', function(stream) {
+          addVideoStream(call.peer, stream); // Display incoming stream
+        });
       });
     }
 
     function createRoom() {
       isHost = true;
-      alert(`Room ID: ${peer.id}`);
+      alert(`Room ID: ${peer.id}`); // Show the room ID for the host
       document.getElementById('room-setup').style.display = 'none';
       showControls();
     }
@@ -165,8 +178,10 @@
       const roomId = document.getElementById('room-id').value.trim();
       if (!roomId) return alert("Enter Room ID");
 
-      const call = peer.call(roomId, userStream);
-      call.on('stream', stream => addVideoStream(roomId, stream));
+      const call = peer.call(roomId, userStream); // Make the call to the room
+      call.on('stream', function(stream) {
+        addVideoStream(roomId, stream); // Display the stream for the joined peer
+      });
 
       document.getElementById('room-setup').style.display = 'none';
       showControls();
