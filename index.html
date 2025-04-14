@@ -124,10 +124,11 @@
   console.log("Initializing PeerJS as host...");
 
   peer = new Peer({
-    host: 'peerjs-server.herokuapp.com', // Public free PeerServer
-    port: 443,
-    secure: true,
-  });
+  host: 'localhost', // Replace with your server's IP or domain if remote
+  port: 9000,        // Port used by your server
+  path: '/',         // Path must match the server path
+  secure: false,     // Set to true if using HTTPS
+});
 
   peer.on('open', (id) => {
     console.log("Peer ID (host):", id);
