@@ -121,7 +121,11 @@
 
     function createRoom() {
       isHost = true;
-      peer = new Peer();
+      peer = new Peer({
+        host: 'peerjs-server.herokuapp.com', // Public free PeerServer
+        port: 443,
+        secure: true,
+      });
 
       peer.on('open', (id) => {
         console.log("Peer ID (host):", id);
@@ -140,13 +144,24 @@
       const roomId = document.getElementById('room-id').value.trim();
       if (!roomId) return alert("Enter Room ID");
 
-      peer = new Peer();
+      peer = new Peer({
+        host: 'peerjs-server.herokuapp.com', // Public free PeerServer
+        port: 443,
+        secure: true,
+      });
 
       peer.on('open', () => {
+        console.log("Peer ID (participant):", peer.id);
+
         const call = peer.call(roomId, userStream);
         call.on('stream', stream => addVideoStream(roomId, stream));
         document.getElementById('room-setup').style.display = 'none';
         showControls();
+      });
+
+      peer.on('call', call => {
+        call.answer(userStream);
+        call.on('stream', stream => addVideoStream(call.peer, stream));
       });
     }
 
